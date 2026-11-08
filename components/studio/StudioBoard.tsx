@@ -12,6 +12,7 @@ const MODEL = process.env.NEXT_PUBLIC_STUDIO_MODEL ?? "claude-haiku-4-5";
 
 export function StudioBoard() {
   const [rows, setRows] = useState<unknown[] | null>(null);
+  const [ppal, setPpal] = useState<unknown[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,13 +21,18 @@ export function StudioBoard() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`query ${r.status}`))))
       .then((d: unknown[]) => live && setRows(d))
       .catch((e: unknown) => live && setError(e instanceof Error ? e.message : "failed"));
+    // PayPal activity is a bonus source: any failure degrades to an empty array, never an error state.
+    fetch("/api/studio/paypal")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: unknown) => live && setPpal(Array.isArray(d) ? d : []))
+      .catch(() => live && setPpal([]));
     return () => {
       live = false;
     };
   }, []);
 
   const ai = useMemo(() => (AI_ON ? buildAi(chatAdapter({ endpoint: "/api/studio/llm", model: MODEL })) : undefined), []);
-  const data = useMemo(() => ({ sources: [{ id: "verdicts", data: rows ?? [] }] }), [rows]);
+  const data = useMemo(() => ({ sources: [{ id: "verdicts", data: rows ?? [] }, { id: "paypal", data: ppal }] }), [rows, ppal]);
 
   if (error) return <p className="p-4 text-red-600">Could not load verdicts: {error}</p>;
   if (!rows) return <p className="p-4 text-neutral-500">Loading…</p>;
