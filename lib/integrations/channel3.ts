@@ -8,12 +8,16 @@ const BASE = "https://api.trychannel3.com"; // v1 search. Auth is the x-api-key 
 const TTL_MS = 60_000;
 const cache = new Map<string, { at: number; fact: ProductFact }>();
 
+// Real v1 shape (probed 2026-11-08): price is an OBJECT {price, compare_at_price, currency};
+// the merchant is `domain` (merchant_domain is always null).
 const Offer = z.object({
-  price: z.number(),
-  currency: z.string().default("USD"),
+  price: z.object({
+    price: z.union([z.number(), z.string()]),
+    currency: z.string().optional(),
+  }),
   availability: z.string().optional(), // "InStock" | "OutOfStock" | ...
   url: z.string().optional(),
-  merchant_domain: z.string().optional(),
+  domain: z.string().optional(),
 });
 const Product = z.object({ id: z.string(), title: z.string(), url: z.string().optional(), offers: z.array(Offer).optional() });
 const Body = z.object({ products: z.array(Product) });
@@ -30,7 +34,8 @@ export function parseChannel3(body: unknown): ProductFact | null {
 
   const priced = (product.offers ?? []).flatMap((o) => {
     try {
-      return [{ o, minor: minorFromJson(o.price, o.currency), inStock: o.availability === "InStock" }];
+      const currency = o.price.currency ?? "USD";
+      return [{ o, minor: minorFromJson(o.price.price, currency), currency, inStock: o.availability === "InStock" }];
     } catch {
       return []; // an unparseable price is skipped, not guessed
     }
@@ -45,9 +50,9 @@ export function parseChannel3(body: unknown): ProductFact | null {
     productId: product.id,
     title: product.title,
     priceMinor: best.minor,
-    currency: best.o.currency,
+    currency: best.currency,
     inStock: best.inStock,
-    merchant: best.o.merchant_domain ?? "unknown",
+    merchant: best.o.domain ?? "unknown",
     buyUrl: best.o.url ?? product.url ?? "",
   };
 }
@@ -62,7 +67,7 @@ export async function searchProduct(query: string, signal?: AbortSignal): Promis
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": getEnv().CHANNEL3_API_KEY ?? "" },
       body: JSON.stringify({ query, limit: 5 }),
-      signal: signal ?? AbortSignal.timeout(3_000),
+      signal: signal ?? AbortSignal.timeout(5_000),
     });
     if (!res.ok) return degrade(`channel3 http ${res.status}`);
     const fact = parseChannel3(await res.json());
