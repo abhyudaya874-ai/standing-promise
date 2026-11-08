@@ -1,7 +1,11 @@
 # BACKLOG
 
 ## Now
-- [ ] Day 1: `/bootstrap`, then `npm run verify` green, then create a promise end to end in the sandbox
+- [x] P1 bootstrap done (commit f848253): verify green, dev on :3001, caps studio/channel3/kernel/bryntum on
+- [x] P2 money path done: create->approve->settle->CAPTURE->1 row, dedup, replay identical, expiry RELEASE (commits cb3b7ef, 4cc9e1a)
+- [x] P3 world done: channel3 schema fixed to live shape, CONDITION_MET/PENDING/UNMET all proven, CAP_CHANNEL3=0 -> FACT_MISSING, manual fallback, page_contains via KERNEL, approvals automated (scripts/kapprove.mjs)
+- [x] P4 surfaces mostly done: /board prewired (pill+scoreboard+still-to-come+grid+chart), /api/studio/paypal live, still-to-come widget + copy test, CAP_STUDIO=0 -> [] + x-degraded proven, bryntum fontawesome fixed
+- [ ] P4 zapier nudge: code ready, BLOCKED on ZAPIER_MCP_TOKEN (needs user's Zapier MCP endpoint)
 
 ## Next
 - [ ] Day 2: settle happy path with a real sandbox buyer approval
