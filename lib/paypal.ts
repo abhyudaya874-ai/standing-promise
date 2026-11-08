@@ -41,7 +41,7 @@ async function getToken(signal?: AbortSignal): Promise<string> {
   return cached.value;
 }
 
-async function call(
+export async function call(
   method: "GET" | "POST",
   path: string,
   o: { body?: unknown; requestId?: string; prefer?: string; signal?: AbortSignal },
