@@ -63,7 +63,7 @@ export async function runResolver(ctx: AgentCtx, g: GuardFacts, signal: AbortSig
         evidenceUrl = p.buyUrl || null;
         // Evidence only: a KERNEL replay of the merchant page. Failure changes nothing.
         if (p.buyUrl && isOn("kernel")) {
-          const page = await attempt("kernel.observe", { url: p.buyUrl }, () => observePage(p.buyUrl, AbortSignal.timeout(4_000)));
+          const page = await attempt("kernel.observe", { url: p.buyUrl }, () => observePage(p.buyUrl, AbortSignal.timeout(9_000)));
           if (page?.replayUrl) evidenceUrl = page.replayUrl;
         }
       }
