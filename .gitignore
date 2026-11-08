@@ -1,0 +1,9 @@
+node_modules
+.next
+.env*
+!env.example
+.devin/ledger.md
+.devin/.last-verify
+.devin/hook-debug.log
+*.tsbuildinfo
+next-env.d.ts

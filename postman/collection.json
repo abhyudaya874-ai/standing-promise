@@ -1,0 +1,88 @@
+{
+  "info": {
+    "name": "Standing Promise: money path",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base", "value": "http://localhost:3000" },
+    { "key": "promiseId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "capabilities",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('lists every vendor', () => pm.expect(pm.response.json().map(c => c.id)).to.include.members(['channel3','kernel','zapier']));"
+      ] } }],
+      "request": { "method": "GET", "url": "{{base}}/api/capabilities" }
+    },
+    {
+      "name": "create promise (price condition)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('201-ish', () => pm.expect([200,201]).to.include(pm.response.code));",
+        "const id = pm.response.json().promiseId;",
+        "pm.test('has promiseId', () => pm.expect(id).to.be.a('string'));",
+        "pm.collectionVariables.set('promiseId', id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "url": "{{base}}/api/promise",
+        "header": [{ "key": "content-type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"op\":\"create\",\"title\":\"Postman promise\",\"amount\":\"12.50\",\"currency\":\"USD\",\"windowMinutes\":30,\"payerName\":\"Asha\",\"condition\":{\"kind\":\"price_at_most\",\"query\":\"running shoes\",\"ceiling\":\"120.00\"}}" }
+      }
+    },
+    {
+      "name": "create rejects a private URL (SSRF guard)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400', () => pm.response.to.have.status(400));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "url": "{{base}}/api/promise",
+        "header": [{ "key": "content-type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"op\":\"create\",\"title\":\"x\",\"amount\":\"1\",\"currency\":\"USD\",\"windowMinutes\":5,\"condition\":{\"kind\":\"page_contains\",\"url\":\"http://169.254.169.254/latest\",\"needle\":\"a\"}}" }
+      }
+    },
+    {
+      "name": "settle (SSE stream; ends with a done event)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "const t = pm.response.text();",
+        "pm.test('stream contains a done or error event', () => pm.expect(t).to.match(/\"kind\":\"(done|error)\"/));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "url": "{{base}}/api/promise",
+        "header": [{ "key": "content-type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"op\":\"settle\",\"promiseId\":\"{{promiseId}}\",\"attempt\":1}" }
+      }
+    },
+    {
+      "name": "settle again = duplicate, one capture",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('second settle is deduped', () => pm.expect(pm.response.text()).to.match(/\"deduped\":(true|false)/));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "url": "{{base}}/api/promise",
+        "header": [{ "key": "content-type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"op\":\"settle\",\"promiseId\":\"{{promiseId}}\",\"attempt\":1}" }
+      }
+    },
+    {
+      "name": "replay verdict is identical",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "if (pm.response.code === 200) pm.test('identical', () => pm.expect(pm.response.json().identical).to.eql(true));",
+        "else pm.test('404 only if never settled to a verdict', () => pm.response.to.have.status(404));"
+      ] } }],
+      "request": { "method": "GET", "url": "{{base}}/api/verdict/replay?promiseId={{promiseId}}" }
+    },
+    {
+      "name": "studio query",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 + array', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });"
+      ] } }],
+      "request": { "method": "GET", "url": "{{base}}/api/studio/query?limit=20" }
+    }
+  ]
+}

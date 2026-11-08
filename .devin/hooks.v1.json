@@ -1,0 +1,15 @@
+{
+  "SessionStart": [
+    { "matcher": "*", "hooks": [ { "type": "command", "command": "bash scripts/hooks/session-context.sh", "timeout": 10 } ] }
+  ],
+  "PreToolUse": [
+    { "matcher": "exec", "hooks": [ { "type": "command", "command": "bash scripts/hooks/guard-exec.sh", "timeout": 10 } ] },
+    { "matcher": "edit", "hooks": [ { "type": "command", "command": "bash scripts/hooks/guard-write.sh", "timeout": 10 } ] }
+  ],
+  "PostToolUse": [
+    { "matcher": "edit", "hooks": [ { "type": "command", "command": "bash scripts/hooks/ledger.sh", "timeout": 10 } ] }
+  ],
+  "Stop": [
+    { "matcher": "*", "hooks": [ { "type": "command", "command": "bash scripts/hooks/verify-gate.sh", "timeout": 10 } ] }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Grep(**)",
+      "Glob(**)",
+      "Exec(git status)",
+      "Exec(git diff)",
+      "Exec(git log)",
+      "Exec(git add)",
+      "Exec(git commit)",
+      "Exec(git stash)",
+      "Exec(npm run)",
+      "Exec(npx tsc)",
+      "Exec(npx vitest)",
+      "Exec(node scripts/check-invariants.mjs)",
+      "Exec(npx drizzle-kit generate)"
+    ],
+    "ask": [
+      "Edit(lib/verdict.ts)",
+      "Edit(db/schema.ts)",
+      "Edit(app/api/promise/route.ts)",
+      "Edit(app/p/page.tsx)",
+      "Edit(scripts/check-invariants.mjs)",
+      "Edit(scripts/hooks/*)",
+      "Edit(.devin/config.json)",
+      "Exec(npm install)",
+      "Exec(npm uninstall)",
+      "Exec(npx drizzle-kit push)",
+      "Exec(npx drizzle-kit migrate)",
+      "Exec(git push)",
+      "Exec(git rebase)",
+      "Read(.env*)",
+      "Fetch(*)"
+    ],
+    "deny": [
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Write(.git/**)",
+      "Write(node_modules/**)",
+      "Exec(sudo)",
+      "Exec(rm -rf /)",
+      "Exec(git push --force)",
+      "Exec(git reset --hard)",
+      "Exec(npm publish)",
+      "Fetch(paypal.com/signin*)"
+    ]
+  }
+}

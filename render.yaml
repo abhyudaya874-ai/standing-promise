@@ -1,0 +1,22 @@
+# Web service ONLY. Render Workflows are created in the dashboard (Blueprints do not support them),
+# see .devin/workflows/wire-render.md.
+services:
+  - type: web
+    name: standing-promise
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: APP_URL
+        sync: false # set to the https://<service>.onrender.com URL after the first deploy
+      - key: CAP_RENDER
+        value: "1"

@@ -1,0 +1,43 @@
+import { getEnv, type Env } from "@/lib/env";
+import type { AdapterResult } from "./types";
+
+export const CAPABILITY_IDS = ["studio", "channel3", "kernel", "elastic", "bryntum", "astropods", "zapier", "render"] as const;
+export type CapabilityId = (typeof CAPABILITY_IDS)[number];
+
+interface Capability {
+  on: (e: Env) => boolean; // flag AND the credentials it needs. Read at CALL time, never at module load.
+  note: string; // honest description of what happens when it is off
+}
+
+const CAPABILITIES: Record<CapabilityId, Capability> = {
+  studio: { on: (e) => e.CAP_STUDIO, note: "dashboard surface; off = trace page only" },
+  channel3: { on: (e) => e.CAP_CHANNEL3 && !!e.CHANNEL3_API_KEY, note: "product conditions; off = manual price entry" },
+  kernel: { on: (e) => e.CAP_KERNEL && !!e.KERNEL_API_KEY, note: "browser observation + replay; off = plain fetch" },
+  elastic: { on: (e) => e.CAP_ELASTIC && !!e.ELASTICSEARCH_URL && !!e.ELASTIC_API_KEY, note: "precedent search; off = no precedent line" },
+  bryntum: { on: (e) => e.CAP_BRYNTUM, note: "timeline surface; off = table" },
+  astropods: { on: (e) => e.CAP_ASTROPODS && !!e.ASTROPODS_AGENT_URL, note: "link to the hosted Promise concierge agent; off = no link" },
+  zapier: { on: (e) => e.CAP_ZAPIER && (!!e.ZAPIER_MCP_TOKEN || !!e.ZAPIER_MCP_URL), note: "email nudges; off = in-app banner" },
+  render: { on: (e) => e.CAP_RENDER && !!e.RENDER_API_KEY, note: "durable sweep tasks; off = settle in-request only" },
+};
+
+export function isOn(id: CapabilityId): boolean {
+  return CAPABILITIES[id].on(getEnv());
+}
+
+export function degrade(reason: string): { ok: false; degraded: true; reason: string } {
+  return { ok: false, degraded: true, reason };
+}
+
+/** Wrap EVERY adapter body in this. A thrown error becomes a degraded result. check-invariants enforces it. */
+export async function guard<T>(id: CapabilityId, fn: () => Promise<AdapterResult<T>>): Promise<AdapterResult<T>> {
+  try {
+    return await fn();
+  } catch (err) {
+    return degrade(`${id}: ${err instanceof Error ? err.message : "failed"}`);
+  }
+}
+
+export function capabilityReport(): { id: CapabilityId; on: boolean; note: string }[] {
+  const env = getEnv();
+  return CAPABILITY_IDS.map((id) => ({ id, on: CAPABILITIES[id].on(env), note: CAPABILITIES[id].note }));
+}

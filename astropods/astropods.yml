@@ -1,0 +1,29 @@
+# Promise concierge: a hosted agent that answers "why was this promise captured / released / still waiting?"
+# It calls OUR read-only endpoints (the app does not call it). Model access comes from the Astropods AI Gateway,
+# so no provider key is needed. Field names follow RFC-1 "Astropods Spec" (https://docs.astropods.com/astropods-package-spec).
+spec: blueprint/v1
+name: promise-concierge
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  interfaces:
+    frontend: true   # the agent serves its OWN web UI; RFC-1 rule 14: it MUST listen on port 80 in production
+    messaging: false
+  healthcheck:
+    path: /health
+  inputs:
+    - name: PROMISE_API_URL
+      datatype: string
+      description: Base URL of the Standing Promise app, e.g. https://standing-promise.onrender.com (no trailing slash)
+
+models:
+  default:
+    provider: gateway          # OpenAI-compatible AI Gateway; injects ASTRO_GATEWAY_URL, ASTRO_GATEWAY_API_KEY, MODEL_DEFAULT
+    models: [claude-haiku-4-5, claude-sonnet-4-6]
+
+dev:
+  interfaces:
+    frontend:
+      port: 8080       # local only; the platform proxies port 80 to this
