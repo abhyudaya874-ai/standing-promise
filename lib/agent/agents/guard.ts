@@ -10,16 +10,18 @@ import type { AgentCtx, GuardFacts } from "../types";
 export async function runGuard(ctx: AgentCtx, signal: AbortSignal): Promise<GuardFacts> {
   const db = getDb();
 
-  const [row] = await db.select().from(promise).where(eq(promise.id, ctx.promiseId)).limit(1);
+  // ONE round trip: the capture slot for this attempt rides along on the promise row.
+  // Remote DBs (Neon HTTP) make each query a ~300ms call; two queries cannot fit the cap.
+  const [joined] = await db
+    .select({ p: promise, capStatus: capture.status })
+    .from(promise)
+    .leftJoin(capture, and(eq(capture.promiseId, promise.id), eq(capture.attempt, ctx.attempt)))
+    .where(eq(promise.id, ctx.promiseId))
+    .limit(1);
+  const row = joined?.p;
   if (!row) throw new Error(`promise ${ctx.promiseId} not found`);
   if (!row.paypalOrderId) throw new Error("promise has no PayPal order");
   if (!Number.isInteger(row.amountMinor) || row.amountMinor <= 0) throw new Error("amountMinor is not a positive integer");
-
-  const [cap] = await db
-    .select({ status: capture.status })
-    .from(capture)
-    .where(and(eq(capture.promiseId, ctx.promiseId), eq(capture.attempt, ctx.attempt)))
-    .limit(1);
 
   if (signal.aborted) throw new Error("guard aborted");
 
@@ -28,7 +30,7 @@ export async function runGuard(ctx: AgentCtx, signal: AbortSignal): Promise<Guar
     payer: { name: row.payerName, email: row.payerEmail },
     orderId: row.paypalOrderId,
     state: row.state as PromiseState,
-    existingCapture: (cap?.status as CaptureStatus | undefined) ?? null,
+    existingCapture: (joined?.capStatus as CaptureStatus | undefined) ?? null,
     requestId: `${ctx.promiseId}:${ctx.attempt}`,
   };
 }

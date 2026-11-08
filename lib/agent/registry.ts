@@ -2,7 +2,7 @@ import type { AgentProfile, SubagentId } from "./types";
 
 // Hard caps. If a profile needs more, the slice is wrong, not the cap.
 export const PROFILES: Record<SubagentId, AgentProfile> = {
-  guard:      { id: "guard",      title: "Capture guard",       maxMs: 400,  retries: 0, requiresNetwork: false, onFailure: "abort" },
+  guard:      { id: "guard",      title: "Capture guard",       maxMs: 2500, retries: 0, requiresNetwork: false, onFailure: "abort" },
   observer:   { id: "observer",   title: "Condition observer",  maxMs: 3000, retries: 1, requiresNetwork: true,  onFailure: "degrade" },
   resolver:   { id: "resolver",   title: "Condition resolver",  maxMs: 9000, retries: 0, requiresNetwork: true,  onFailure: "degrade" },
   reconciler: { id: "reconciler", title: "Event reconciler",    maxMs: 1000, retries: 0, requiresNetwork: false, onFailure: "ignore" },
