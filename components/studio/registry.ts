@@ -1,6 +1,7 @@
 import type { AgDefaultWidgetDefinition } from "ag-studio";
 import { createWidgets, type AgRegistry, type AgWidgetDefinition } from "ag-studio-react";
 import { Scoreboard } from "./widgets/scoreboard";
+import { StillToCome } from "./widgets/still-to-come";
 import { VerdictPill } from "./widgets/verdict-pill";
 
 // A custom widget = id + label + comp + dataMapping (which columns it needs) + form (the property panel) + sizes.
@@ -42,9 +43,37 @@ const scoreboard: AgWidgetDefinition = {
   ai: { description: "A friendly scoreboard of who is on track, waiting, or missed their date. Not a collections report." },
 };
 
+const stillToCome: AgWidgetDefinition = {
+  id: "stillToCome",
+  label: "Still to come",
+  comp: StillToCome,
+  defaultSize: { width: 300, height: 280 },
+  minSize: { width: 200, height: 160 },
+  dataMapping: {
+    customer: { type: "field", supportedRoles: ["category"], requires: { cardinality: "one" }, required: true, aiDescription: "Who the invoice is for (paypal source)" },
+    amountMinor: { type: "field", supportedRoles: ["numeric"], requires: { cardinality: "one" }, required: true, aiDescription: "Invoice amount in minor units (paypal source)" },
+    currency: { type: "field", supportedRoles: ["category"], requires: { cardinality: "one" }, required: true, aiDescription: "Invoice currency code (paypal source)" },
+    status: { type: "field", supportedRoles: ["category"], requires: { cardinality: "one" }, required: true, aiDescription: "Invoice status, e.g. UNPAID (paypal source)" },
+    dueAt: { type: "field", supportedRoles: ["temporal"], requires: { cardinality: "one" }, aiDescription: "Invoice due date (paypal source)" },
+  },
+  form: () => [
+    {
+      type: "section", key: "data", label: "Data", defaultExpanded: true,
+      items: [
+        { type: "field", id: "dataMapping.customer", label: "Customer", supportedRoles: ["category"], requires: { cardinality: "one" }, required: true },
+        { type: "field", id: "dataMapping.amountMinor", label: "Amount (minor)", supportedRoles: ["numeric"], requires: { cardinality: "one" }, required: true },
+        { type: "field", id: "dataMapping.currency", label: "Currency", supportedRoles: ["category"], requires: { cardinality: "one" }, required: true },
+        { type: "field", id: "dataMapping.status", label: "Status", supportedRoles: ["category"], requires: { cardinality: "one" }, required: true },
+        { type: "field", id: "dataMapping.dueAt", label: "Due date", supportedRoles: ["temporal"], requires: { cardinality: "one" } },
+      ],
+    },
+  ],
+  ai: { description: "Invoices still waiting on payment, in a friendly register. Empty state says 'Nothing waiting. All caught up.'" },
+};
+
 // The registry type is what makes `additionalTypes` legal: built-in widgets plus ours.
 interface PromiseRegistry extends AgRegistry {
   widgets: readonly (AgDefaultWidgetDefinition | AgWidgetDefinition)[];
 }
 
-export const widgets = createWidgets<PromiseRegistry>({ additionalTypes: [verdictPill, scoreboard] });
+export const widgets = createWidgets<PromiseRegistry>({ additionalTypes: [verdictPill, scoreboard, stillToCome] });

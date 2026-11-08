@@ -10,6 +10,47 @@ import { chatAdapter } from "./chat-adapter";
 const AI_ON = process.env.NEXT_PUBLIC_STUDIO_AI === "1";
 const MODEL = process.env.NEXT_PUBLIC_STUDIO_MODEL ?? "claude-haiku-4-5";
 
+// Pre-wired demo layout: pill + scoreboard + still-to-come on top, verdicts grid + reason chart below.
+// Field refs are "sourceId.fieldKey"; categories take "last", the chart measure takes "sum".
+const f = (id: string, aggregation?: "sum" | "avg" | "min" | "max" | "count" | "countd" | "first" | "last") =>
+  aggregation ? { id, aggregation } : { id };
+const initialState = {
+  pages: [
+    {
+      id: "page1",
+      widgets: {
+        w1: { type: "verdictPill", dataMapping: { reason: [f("verdicts.reason", "last")] } },
+        w2: { type: "scoreboard", dataMapping: { payer: [f("verdicts.payer", "last")], kind: [f("verdicts.kind", "last")] } },
+        w3: {
+          type: "stillToCome",
+          dataMapping: {
+            customer: [f("paypal.customer", "last")],
+            amountMinor: [f("paypal.amountMinor", "last")],
+            currency: [f("paypal.currency", "last")],
+            status: [f("paypal.status", "last")],
+            dueAt: [f("paypal.dueAt", "last")],
+          },
+        },
+        w4: {
+          type: "grid",
+          dataMapping: {
+            cols: [f("verdicts.title"), f("verdicts.payer"), f("verdicts.state"), f("verdicts.reason"), f("verdicts.consequence"), f("verdicts.amount")],
+          },
+        },
+        w5: { type: "column-chart-grouped", dataMapping: { categoryKey: [f("verdicts.reason")], valueKey: [f("verdicts.amountMinor", "sum")] } },
+      },
+      widgetLayout: {
+        w1: { xTrack: 0, yTrack: 0, xSpan: 6, ySpan: 6 },
+        w2: { xTrack: 6, yTrack: 0, xSpan: 8, ySpan: 8 },
+        w3: { xTrack: 14, yTrack: 0, xSpan: 10, ySpan: 8 },
+        w4: { xTrack: 0, yTrack: 8, xSpan: 14, ySpan: 14 },
+        w5: { xTrack: 14, yTrack: 8, xSpan: 10, ySpan: 14 },
+      },
+    },
+  ],
+  selectedPageId: "page1",
+};
+
 export function StudioBoard() {
   const [rows, setRows] = useState<unknown[] | null>(null);
   const [ppal, setPpal] = useState<unknown[]>([]);
@@ -39,7 +80,7 @@ export function StudioBoard() {
   return (
     <AgStudioProvider licenseKey={process.env.NEXT_PUBLIC_AG_STUDIO_KEY ?? ""} modules={[AgStudioAiModule]}>
       <div className="h-[calc(100vh-3.5rem)] w-full">
-        <AgStudio data={data} widgets={widgets} mode="edit" ai={ai} />
+        <AgStudio data={data} widgets={widgets} mode="edit" ai={ai} initialState={initialState} />
       </div>
     </AgStudioProvider>
   );
