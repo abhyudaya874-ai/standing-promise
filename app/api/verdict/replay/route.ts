@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { promiseEvent } from "@/db/schema";
@@ -26,7 +27,8 @@ export async function GET(req: Request): Promise<Response> {
 
   const recomputed = computeVerdict(payload.input);
   return Response.json({
-    identical: JSON.stringify(recomputed) === JSON.stringify(payload.verdict),
+    // jsonb does not preserve key order, so a stringify diff would always say "different".
+    identical: isDeepStrictEqual(recomputed, payload.verdict),
     stored: payload.verdict,
     recomputed,
     storedAt: row.at.toISOString(),
