@@ -1,6 +1,8 @@
 "use client";
 import "@bryntum/scheduler/scheduler.css"; // base structure
-import "@bryntum/scheduler/svalbard-light.css"; // theme: VERIFY the filename in node_modules/@bryntum/scheduler/*.css
+import "@bryntum/scheduler/svalbard-light.css"; // theme
+import "@bryntum/scheduler/fontawesome/css/fontawesome.css"; // icons need both fontawesome files
+import "@bryntum/scheduler/fontawesome/css/solid.css";
 import { BryntumScheduler } from "@bryntum/scheduler-react";
 import { useEffect, useMemo, useState } from "react";
 import { toScheduler, type TimelineRow } from "@/lib/integrations/bryntum";
